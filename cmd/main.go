@@ -172,38 +172,38 @@ func assignDefaultReviewers(ctx context.Context, client *github.Client, owner, r
 		return
 	}
 
-	opts := &github.ListContributorsOptions{ListOptions: github.ListOptions{PerPage: 100}}
-	var contributors []string
+	opts := &github.ListCollaboratorsOptions{ListOptions: github.ListOptions{PerPage: 100}}
+	var collaborators []string
 	for {
-		contributor, resp, err := client.Repositories.ListContributors(ctx, owner, repo, opts)
+		collaborator, resp, err := client.Repositories.ListCollaborators(ctx, owner, repo, opts)
 		if err != nil {
-			log.Printf("Failed to list contributors: %v", err)
+			log.Printf("Failed to list collaborators: %v", err)
 			break
 		}
-		for _, c := range contributor {
+		for _, c := range collaborator {
 			if c.GetLogin() == pr.GetUser().GetLogin() {
 				continue
 			}
-			contributors = append(contributors, c.GetLogin())
+			collaborators = append(collaborators, c.GetLogin())
 		}
 		if resp.NextPage == 0 {
 			break
 		}
 		opts.Page = resp.NextPage
 	}
-	if len(contributors) == 0 || len(contributors) == 1 && contributors[0] == pr.GetUser().GetLogin() {
-		log.Printf("No contributors found")
+	if len(collaborators) == 0 {
+		log.Printf("No collaborators found")
 		return
 	}
 
 	var reviewers []string
-	if len(contributors) > 10 {
-		rand.Shuffle(len(contributors), func(i, j int) {
-			contributors[i], contributors[j] = contributors[j], contributors[i]
+	if len(collaborators) > 10 {
+		rand.Shuffle(len(collaborators), func(i, j int) {
+			collaborators[i], collaborators[j] = collaborators[j], collaborators[i]
 		})
-		reviewers = contributors[:10]
+		reviewers = collaborators[:10]
 	} else {
-		reviewers = contributors
+		reviewers = collaborators
 	}
 
 	reviewersRequest := github.ReviewersRequest{
