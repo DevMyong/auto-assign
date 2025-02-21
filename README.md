@@ -41,20 +41,20 @@ name: PR Open Automation
 
 on:
   pull_request:
-    types: [ opened, reopened, synchronize, ready_for_review ]
+    types: [opened, ready_for_review]
 
 jobs:
-  auto-assign:
+  add-auto-assign:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Run auto-assign-defaults Action
+      - name: Assigns default PR metadata
         uses: devmyong/auto-assign@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NUMBER: ${{ github.event.number }}
 ```
 
 ---
