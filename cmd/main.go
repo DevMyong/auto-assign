@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -68,6 +69,19 @@ func getPullRequest(ctx context.Context, client *github.Client, owner, repo stri
 
 // handleTitleBasedLabel adds labels based on the PR title keywords.
 func handleTitleBasedLabel(ctx context.Context, client *github.Client, owner, repo string, prNumber int, pr *github.PullRequest) {
+	title := pr.GetTitle()
+	if !strings.Contains(strings.ToLower(title), ":") {
+		log.Fatalf("PR title does not contain a colon: %s", title)
+	}
+
+	// Split the title into a prefix and description.
+	parts := strings.SplitN(title, ":", 2)
+	prefix := strings.ToLower(strings.TrimSpace(parts[0]))
+
+	// if prefix has any brackets, remove them
+	re := regexp.MustCompile(`[\(\[\{<].*$`)
+	prefix = re.ReplaceAllString(prefix, "")
+
 	labelMap := map[string]string{
 		"feat":     "enhancement",
 		"fix":      "bug",
@@ -78,44 +92,23 @@ func handleTitleBasedLabel(ctx context.Context, client *github.Client, owner, re
 		"test":     "test",
 		"chore":    "chore",
 	}
-
-	title := pr.GetTitle()
-	if !strings.Contains(strings.ToLower(title), ":") {
-		log.Fatalf("PR title does not contain a colon: %s", title)
-	}
-
-	// Split the title into a prefix and description.
-	parts := strings.SplitN(title, ":", 2)
-	prefix := strings.ToLower(strings.TrimSpace(parts[0]))
-
-	var labelsToAdd []string
-	if label, ok := labelMap[prefix]; ok {
-		labelsToAdd = append(labelsToAdd, label)
-	} else {
+	label, ok := labelMap[prefix]
+	if !ok {
 		log.Fatalf("No matching label for prefix: %s", prefix)
 	}
 
-	existingLabels := make(map[string]struct{})
-	for _, lab := range pr.Labels {
-		existingLabels[lab.GetName()] = struct{}{}
-	}
-
-	var finalLabels []string
-	for _, lab := range labelsToAdd {
-		if _, ok := existingLabels[lab]; !ok {
-			finalLabels = append(finalLabels, lab)
+	for _, l := range pr.Labels {
+		if l.GetName() == label {
+			log.Printf("PR already has label: %s", label)
+			return
 		}
 	}
-	if len(finalLabels) == 0 {
-		log.Printf("No new labels to add")
-		return
-	}
 
-	_, _, err := client.Issues.AddLabelsToIssue(ctx, owner, repo, prNumber, finalLabels)
+	_, _, err := client.Issues.AddLabelsToIssue(ctx, owner, repo, prNumber, []string{label})
 	if err != nil {
 		log.Printf("Failed to add title-based labels: %v", err)
 	} else {
-		log.Printf("Added title-based labels: %v", finalLabels)
+		log.Printf("Added title-based labels: %v", label)
 	}
 }
 
