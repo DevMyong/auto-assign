@@ -1,11 +1,5 @@
 name: auto-assign-defaults
-description: >
-  Automatically assigns default metadata to pull requests. This action:
-    - Adds labels based on PR title keywords (e.g., "feat" becomes "enhancement", "fix" becomes "bug", etc.)
-    - Adds d-day labels based on code size.
-    - Sets the PR author as the default assignee.
-    - Requests reviewers from all repository contributors (randomly selecting up to 10 if there are more than 10).
-
+description: "Assigns default PR metadata: title-based labels, D-day by code size, PR author as assignee, and random reviewers."
 branding:
   icon: check-circle
   color: blue
