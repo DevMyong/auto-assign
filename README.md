@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run auto-assign-defaults Action
-        uses: devmyong/auto-assign-defaults@v1.0.0
+        uses: devmyong/auto-assign@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
